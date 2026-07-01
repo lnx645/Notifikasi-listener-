@@ -5,6 +5,13 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
+# Ignore warnings for missing annotations and optional network providers
+-dontwarn com.google.errorprone.annotations.**
+-dontwarn org.bouncycastle.jsse.**
+-dontwarn org.bouncycastle.jsse.provider.**
+-dontwarn org.conscrypt.**
+-dontwarn org.openjsse.**
+
 # If your project uses WebView with JS, uncomment the following
 # and specify the fully qualified class name to the JavaScript interface
 # class:
