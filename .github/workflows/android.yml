@@ -30,6 +30,11 @@ jobs:
           distribution: 'zulu'
           cache: 'gradle'
 
+      - name: Download Official Gradle Wrapper JAR
+        run: |
+          mkdir -p gradle/wrapper
+          curl -sSLo gradle/wrapper/gradle-wrapper.jar https://github.com/gradle/gradle/raw/v9.3.1/gradle/wrapper/gradle-wrapper.jar
+
       - name: Create API Key .env File
         run: |
           if [ -f .env.example ] && [ ! -f .env ]; then
