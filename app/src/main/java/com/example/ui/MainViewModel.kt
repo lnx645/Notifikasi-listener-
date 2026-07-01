@@ -234,6 +234,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun updateMonitoringPackages(packages: List<String>) {
+        prefs.monitoringPackages = packages
+        _monitoringPackages.value = packages
+        viewModelScope.launch {
+            _toastMessage.emit("Daftar aplikasi dipantau diperbarui")
+        }
+    }
+
     fun resetConfiguration() {
         val context = getApplication<Application>()
         prefs.resetToDefaults(context)

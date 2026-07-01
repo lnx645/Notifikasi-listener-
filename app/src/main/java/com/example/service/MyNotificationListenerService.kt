@@ -84,7 +84,11 @@ class MyNotificationListenerService : NotificationListenerService() {
             .setOngoing(true)
             .build()
 
-        startForeground(99, notification)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(99, notification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+        } else {
+            startForeground(99, notification)
+        }
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {

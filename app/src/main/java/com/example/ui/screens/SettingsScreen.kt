@@ -66,7 +66,6 @@ fun SettingsScreen(
     var autoStartAfterBoot by remember { mutableStateOf(true) }
     var debugMode by remember { mutableStateOf(false) }
 
-    val monitoringPackages = remember { mutableStateListOf<String>() }
     var newPackageInput by remember { mutableStateOf("") }
 
     // Dialog confirmation states
@@ -80,10 +79,6 @@ fun SettingsScreen(
     LaunchedEffect(syncPackagesState) { syncPackages = syncPackagesState }
     LaunchedEffect(retryCountState) { retryCount = retryCountState.toString() }
     LaunchedEffect(connectionTimeoutState) { connectionTimeout = connectionTimeoutState.toString() }
-    LaunchedEffect(monitoringPackagesState) {
-        monitoringPackages.clear()
-        monitoringPackages.addAll(monitoringPackagesState)
-    }
     LaunchedEffect(appIdState) { applicationId = appIdState }
     LaunchedEffect(autoRetryState) { autoRetry = autoRetryState }
     LaunchedEffect(autoStartState) { autoStartAfterBoot = autoStartState }
@@ -478,8 +473,9 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.width(10.dp))
                     IconButton(
                         onClick = {
-                            if (newPackageInput.isNotEmpty() && !monitoringPackages.contains(newPackageInput)) {
-                                monitoringPackages.add(newPackageInput)
+                            if (newPackageInput.isNotEmpty() && !monitoringPackagesState.contains(newPackageInput)) {
+                                val updatedList = monitoringPackagesState.toMutableList().apply { add(newPackageInput) }
+                                viewModel.updateMonitoringPackages(updatedList)
                                 newPackageInput = ""
                             }
                         },
@@ -497,7 +493,7 @@ fun SettingsScreen(
                 }
 
                 // Display current chips of package list
-                if (monitoringPackages.isEmpty()) {
+                if (monitoringPackagesState.isEmpty()) {
                     Text(
                         text = "Semua aplikasi dipantau (Filter Kosong)",
                         style = MaterialTheme.typography.bodySmall,
@@ -513,7 +509,7 @@ fun SettingsScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        monitoringPackages.forEach { pkg ->
+                        monitoringPackagesState.forEach { pkg ->
                             InputChip(
                                 selected = true,
                                 onClick = { },
@@ -531,7 +527,10 @@ fun SettingsScreen(
                                         contentDescription = "Delete package",
                                         modifier = Modifier
                                             .size(14.dp)
-                                            .clickable { monitoringPackages.remove(pkg) }
+                                            .clickable {
+                                                val updatedList = monitoringPackagesState.toMutableList().apply { remove(pkg) }
+                                                viewModel.updateMonitoringPackages(updatedList)
+                                            }
                                     )
                                 },
                                 colors = InputChipDefaults.inputChipColors(
@@ -608,7 +607,7 @@ fun SettingsScreen(
                     syncPackages = syncPackages,
                     retryCount = retryCount.toIntOrNull() ?: 3,
                     connectionTimeout = connectionTimeout.toIntOrNull() ?: 15,
-                    monitoringPackages = monitoringPackages.toList(),
+                    monitoringPackages = monitoringPackagesState,
                     applicationId = applicationId.trim(),
                     autoRetry = autoRetry,
                     autoStartAfterBoot = autoStartAfterBoot,

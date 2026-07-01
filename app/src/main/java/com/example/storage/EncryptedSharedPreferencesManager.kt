@@ -105,9 +105,12 @@ class EncryptedSharedPreferencesManager(context: Context) {
 
     var monitoringPackages: List<String>
         get() {
-            val raw = sharedPreferences.getString(KEY_MONITORING_PACKAGES, null)
-            return if (raw.isNullOrBlank()) {
-                DEFAULT_PACKAGES
+            if (!sharedPreferences.contains(KEY_MONITORING_PACKAGES)) {
+                return DEFAULT_PACKAGES
+            }
+            val raw = sharedPreferences.getString(KEY_MONITORING_PACKAGES, "") ?: ""
+            return if (raw.isEmpty()) {
+                emptyList()
             } else {
                 raw.split(",").map { it.trim() }.filter { it.isNotEmpty() }
             }
