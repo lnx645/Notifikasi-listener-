@@ -45,6 +45,16 @@ class MyNotificationListenerService : NotificationListenerService() {
         return super.onBind(intent)
     }
 
+    override fun onListenerConnected() {
+        super.onListenerConnected()
+        Log.d("NotificationListener", "Notification Listener Connected")
+    }
+
+    override fun onListenerDisconnected() {
+        super.onListenerDisconnected()
+        Log.d("NotificationListener", "Notification Listener Disconnected")
+    }
+
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         super.onNotificationPosted(sbn)
         if (sbn == null) return

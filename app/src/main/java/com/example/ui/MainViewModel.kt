@@ -100,6 +100,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
         _isServiceEnabled.value = enabled
+
+        if (enabled) {
+            try {
+                val componentName = android.content.ComponentName(
+                    context,
+                    com.example.service.MyNotificationListenerService::class.java
+                )
+                android.service.notification.NotificationListenerService.requestRebind(componentName)
+            } catch (e: Exception) {
+                android.util.Log.e("MainViewModel", "Failed to requestRebind of MyNotificationListenerService", e)
+            }
+        }
     }
 
     fun openNotificationAccessSettings(context: Context) {
