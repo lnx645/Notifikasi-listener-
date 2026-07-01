@@ -8,6 +8,12 @@ class NotificationRepository(private val dao: NotificationLogDao) {
     val totalCount: Flow<Int> = dao.getTotalLogsCount()
     val successCount: Flow<Int> = dao.getSuccessLogsCount()
     val failedCount: Flow<Int> = dao.getFailedLogsCount()
+    val pendingCount: Flow<Int> = dao.getPendingLogsCount()
+    val latestLog: Flow<NotificationLog?> = dao.getLatestLog()
+
+    fun getTodayCount(todayPrefix: String): Flow<Int> = dao.getTodayLogsCount(todayPrefix)
+    fun getTodaySuccessCount(todayPrefix: String): Flow<Int> = dao.getTodaySuccessCount(todayPrefix)
+    fun getTodayFailedCount(todayPrefix: String): Flow<Int> = dao.getTodayFailedCount(todayPrefix)
 
     suspend fun insertLog(log: NotificationLog): Long {
         return dao.insertLog(log)

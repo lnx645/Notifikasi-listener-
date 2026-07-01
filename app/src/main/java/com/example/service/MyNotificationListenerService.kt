@@ -48,6 +48,9 @@ class MyNotificationListenerService : NotificationListenerService() {
     override fun onListenerConnected() {
         super.onListenerConnected()
         Log.d("NotificationListener", "Notification Listener Connected")
+        if (prefs.monitoringEnabled) {
+            showForegroundNotification()
+        }
     }
 
     override fun onListenerDisconnected() {
@@ -55,9 +58,43 @@ class MyNotificationListenerService : NotificationListenerService() {
         Log.d("NotificationListener", "Notification Listener Disconnected")
     }
 
+    private fun showForegroundNotification() {
+        val channelId = "monitoring_service_channel"
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            val channel = android.app.NotificationChannel(
+                channelId,
+                "Invitnesia Monitoring Bridge",
+                android.app.NotificationManager.IMPORTANCE_MIN
+            )
+            val manager = getSystemService(android.content.Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+            manager.createNotificationChannel(channel)
+        }
+
+        val pendingIntent = android.app.PendingIntent.getActivity(
+            this, 0,
+            android.content.Intent(this, com.example.MainActivity::class.java),
+            android.app.PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = androidx.core.app.NotificationCompat.Builder(this, channelId)
+            .setContentTitle("Invitnesia Notif")
+            .setContentText("Pemantauan Notifikasi E-Wallet Sedang Aktif")
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentIntent(pendingIntent)
+            .setOngoing(true)
+            .build()
+
+        startForeground(99, notification)
+    }
+
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         super.onNotificationPosted(sbn)
         if (sbn == null) return
+
+        if (!prefs.monitoringEnabled) {
+            Log.d("NotificationListener", "Monitoring is inactive. Ignoring notification.")
+            return
+        }
 
         val packageName = sbn.packageName ?: return
 

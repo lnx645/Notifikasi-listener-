@@ -47,15 +47,42 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val failedLogsCount: StateFlow<Int> = repository.failedCount
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
+    val pendingLogsCount: StateFlow<Int> = repository.pendingCount
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+
+    val latestLog: StateFlow<NotificationLog?> = repository.latestLog
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    // Today's reactive statistics
+    private val todayPrefix = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
+
+    val todayTotalLogsCount: StateFlow<Int> = repository.getTodayCount(todayPrefix)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+
+    val todaySuccessLogsCount: StateFlow<Int> = repository.getTodaySuccessCount(todayPrefix)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+
+    val todayFailedLogsCount: StateFlow<Int> = repository.getTodayFailedCount(todayPrefix)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+
     // Connection & Service states
     private val _isServiceEnabled = MutableStateFlow(false)
     val isServiceEnabled: StateFlow<Boolean> = _isServiceEnabled.asStateFlow()
+
+    private val _isMonitoringEnabled = MutableStateFlow(false)
+    val isMonitoringEnabled: StateFlow<Boolean> = _isMonitoringEnabled.asStateFlow()
 
     private val _isSyncingPackages = MutableStateFlow(false)
     val isSyncingPackages: StateFlow<Boolean> = _isSyncingPackages.asStateFlow()
 
     private val _toastMessage = MutableSharedFlow<String>()
     val toastMessage: SharedFlow<String> = _toastMessage.asSharedFlow()
+
+    private val _serverConnectionStatus = MutableStateFlow("BELUM DIUJI")
+    val serverConnectionStatus: StateFlow<String> = _serverConnectionStatus.asStateFlow()
+
+    private val _isTestingApi = MutableStateFlow(false)
+    val isTestingApi: StateFlow<Boolean> = _isTestingApi.asStateFlow()
 
     // Settings States
     private val _backendUrl = MutableStateFlow("")
@@ -78,6 +105,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _monitoringPackages = MutableStateFlow<List<String>>(emptyList())
     val monitoringPackages: StateFlow<List<String>> = _monitoringPackages.asStateFlow()
+
+    private val _applicationId = MutableStateFlow("")
+    val applicationId: StateFlow<String> = _applicationId.asStateFlow()
+
+    private val _autoRetry = MutableStateFlow(true)
+    val autoRetry: StateFlow<Boolean> = _autoRetry.asStateFlow()
+
+    private val _autoStartAfterBoot = MutableStateFlow(true)
+    val autoStartAfterBoot: StateFlow<Boolean> = _autoStartAfterBoot.asStateFlow()
+
+    private val _debugMode = MutableStateFlow(false)
+    val debugMode: StateFlow<Boolean> = _debugMode.asStateFlow()
+
+    private val _lastSyncTime = MutableStateFlow("Belum pernah")
+    val lastSyncTime: StateFlow<String> = _lastSyncTime.asStateFlow()
 
     init {
         loadSettings()
@@ -111,6 +153,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             } catch (e: Exception) {
                 android.util.Log.e("MainViewModel", "Failed to requestRebind of MyNotificationListenerService", e)
             }
+        } else {
+            // Force monitoringEnabled to false if system permission is disabled
+            if (prefs.monitoringEnabled) {
+                prefs.monitoringEnabled = false
+                _isMonitoringEnabled.value = false
+            }
+        }
+    }
+
+    fun setMonitoringEnabled(enabled: Boolean) {
+        if (enabled && !_isServiceEnabled.value) {
+            viewModelScope.launch {
+                _toastMessage.emit("Gagal: Berikan izin Akses Notifikasi terlebih dahulu!")
+            }
+            return
+        }
+        prefs.monitoringEnabled = enabled
+        _isMonitoringEnabled.value = enabled
+        viewModelScope.launch {
+            if (enabled) {
+                _toastMessage.emit("Pemantauan Aktif 🟢")
+                checkServiceStatus()
+            } else {
+                _toastMessage.emit("Pemantauan Nonaktif 🔴")
+            }
         }
     }
 
@@ -128,6 +195,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _retryCount.value = prefs.retryCount
         _connectionTimeout.value = prefs.connectionTimeout
         _monitoringPackages.value = prefs.monitoringPackages
+        _isMonitoringEnabled.value = prefs.monitoringEnabled
+        _lastSyncTime.value = prefs.lastSyncTime
+        _applicationId.value = prefs.applicationId.ifEmpty { getApplication<Application>().packageName }
+        _autoRetry.value = prefs.autoRetry
+        _autoStartAfterBoot.value = prefs.autoStartAfterBoot
+        _debugMode.value = prefs.debugMode
     }
 
     fun updateSettings(
@@ -137,7 +210,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         syncPackages: Boolean,
         retryCount: Int,
         connectionTimeout: Int,
-        monitoringPackages: List<String>
+        monitoringPackages: List<String>,
+        applicationId: String,
+        autoRetry: Boolean,
+        autoStartAfterBoot: Boolean,
+        debugMode: Boolean
     ) {
         prefs.backendUrl = backendUrl
         prefs.authToken = authToken
@@ -146,10 +223,40 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         prefs.retryCount = retryCount
         prefs.connectionTimeout = connectionTimeout
         prefs.monitoringPackages = monitoringPackages
+        prefs.applicationId = applicationId
+        prefs.autoRetry = autoRetry
+        prefs.autoStartAfterBoot = autoStartAfterBoot
+        prefs.debugMode = debugMode
 
         loadSettings()
         viewModelScope.launch {
-            _toastMessage.emit("Settings saved successfully")
+            _toastMessage.emit("Konfigurasi disimpan successfully")
+        }
+    }
+
+    fun resetConfiguration() {
+        val context = getApplication<Application>()
+        prefs.resetToDefaults(context)
+        loadSettings()
+        viewModelScope.launch {
+            _toastMessage.emit("Semua konfigurasi direset ke bawaan")
+        }
+    }
+
+    fun testApiConnection() {
+        viewModelScope.launch {
+            _isTestingApi.value = true
+            _toastMessage.emit("Menguji koneksi server ke: ${prefs.backendUrl} ...")
+            val result = networkClient.syncPackages()
+            _isTestingApi.value = false
+            if (result.isSuccess) {
+                _serverConnectionStatus.value = "CONNECTED"
+                _toastMessage.emit("Test API Berhasil: Server Terhubung! ✅")
+            } else {
+                _serverConnectionStatus.value = "DISCONNECTED"
+                val errorMsg = result.exceptionOrNull()?.message ?: "Unknown error"
+                _toastMessage.emit("Test API Gagal: $errorMsg ❌")
+            }
         }
     }
 
@@ -161,16 +268,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
             if (result.isSuccess) {
                 val packages = result.getOrThrow()
+                val format = java.text.SimpleDateFormat("dd MMM yyyy, HH:mm:ss", java.util.Locale.getDefault())
+                val nowStr = format.format(java.util.Date())
+                prefs.lastSyncTime = nowStr
+                _lastSyncTime.value = nowStr
+
                 if (packages.isNotEmpty()) {
                     prefs.monitoringPackages = packages
                     _monitoringPackages.value = packages
-                    _toastMessage.emit("Successfully synchronized ${packages.size} package(s)")
+                    _toastMessage.emit("Berhasil menyelaraskan ${packages.size} package")
                 } else {
-                    _toastMessage.emit("Config received empty package list")
+                    _toastMessage.emit("Penyelarasan sukses (daftar kosong)")
                 }
             } else {
                 val errorMsg = result.exceptionOrNull()?.message ?: "Unknown network error"
-                _toastMessage.emit("Sync failed: $errorMsg")
+                _toastMessage.emit("Penyelarasan gagal: $errorMsg")
             }
         }
     }
@@ -178,7 +290,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun clearLogs() {
         viewModelScope.launch {
             repository.clearAllLogs()
-            _toastMessage.emit("All logs cleared")
+            _toastMessage.emit("Semua log lokal berhasil dibersihkan")
         }
     }
 
@@ -186,7 +298,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             val pendingCount = repository.getPendingLogs().size
             if (pendingCount == 0) {
-                _toastMessage.emit("No pending logs to upload")
+                _toastMessage.emit("Tidak ada antrean log pending untuk dikirim")
                 return@launch
             }
 
@@ -197,7 +309,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             WorkManager.getInstance(getApplication())
                 .enqueueUniqueWork("notification_upload_work", ExistingWorkPolicy.REPLACE, uploadWorkRequest)
 
-            _toastMessage.emit("Enqueued manual upload for $pendingCount pending notification(s)")
+            _toastMessage.emit("Memulai sinkronisasi paksa untuk $pendingCount antrean...")
         }
     }
 }

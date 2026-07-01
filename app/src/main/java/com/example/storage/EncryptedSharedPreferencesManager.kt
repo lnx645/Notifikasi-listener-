@@ -32,6 +32,12 @@ class EncryptedSharedPreferencesManager(context: Context) {
         private const val KEY_MONITORING_PACKAGES = "monitoring_packages"
         private const val KEY_RETRY_COUNT = "retry_count"
         private const val KEY_CONNECTION_TIMEOUT = "connection_timeout"
+        private const val KEY_MONITORING_ENABLED = "monitoring_enabled"
+        private const val KEY_LAST_SYNC_TIME = "last_sync_time"
+        private const val KEY_APPLICATION_ID = "application_id"
+        private const val KEY_AUTO_RETRY = "auto_retry"
+        private const val KEY_AUTO_START_AFTER_BOOT = "auto_start_after_boot"
+        private const val KEY_DEBUG_MODE = "debug_mode"
 
         private val DEFAULT_PACKAGES = listOf(
             "id.dana",
@@ -67,6 +73,35 @@ class EncryptedSharedPreferencesManager(context: Context) {
     var connectionTimeout: Int
         get() = sharedPreferences.getInt(KEY_CONNECTION_TIMEOUT, 15)
         set(value) = sharedPreferences.edit().putInt(KEY_CONNECTION_TIMEOUT, value).apply()
+
+    var monitoringEnabled: Boolean
+        get() = sharedPreferences.getBoolean(KEY_MONITORING_ENABLED, false)
+        set(value) = sharedPreferences.edit().putBoolean(KEY_MONITORING_ENABLED, value).apply()
+
+    var lastSyncTime: String
+        get() = sharedPreferences.getString(KEY_LAST_SYNC_TIME, "Belum pernah") ?: "Belum pernah"
+        set(value) = sharedPreferences.edit().putString(KEY_LAST_SYNC_TIME, value).apply()
+
+    var applicationId: String
+        get() = sharedPreferences.getString(KEY_APPLICATION_ID, "") ?: ""
+        set(value) = sharedPreferences.edit().putString(KEY_APPLICATION_ID, value).apply()
+
+    var autoRetry: Boolean
+        get() = sharedPreferences.getBoolean(KEY_AUTO_RETRY, true)
+        set(value) = sharedPreferences.edit().putBoolean(KEY_AUTO_RETRY, value).apply()
+
+    var autoStartAfterBoot: Boolean
+        get() = sharedPreferences.getBoolean(KEY_AUTO_START_AFTER_BOOT, true)
+        set(value) = sharedPreferences.edit().putBoolean(KEY_AUTO_START_AFTER_BOOT, value).apply()
+
+    var debugMode: Boolean
+        get() = sharedPreferences.getBoolean(KEY_DEBUG_MODE, false)
+        set(value) = sharedPreferences.edit().putBoolean(KEY_DEBUG_MODE, value).apply()
+
+    fun resetToDefaults(context: Context) {
+        sharedPreferences.edit().clear().apply()
+        this.applicationId = context.packageName
+    }
 
     var monitoringPackages: List<String>
         get() {

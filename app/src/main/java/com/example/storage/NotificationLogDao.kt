@@ -22,6 +22,21 @@ interface NotificationLogDao {
     @Update
     suspend fun updateLog(log: NotificationLog)
 
+    @Query("SELECT COUNT(*) FROM notification_logs WHERE status = 'PENDING_RETRY'")
+    fun getPendingLogsCount(): Flow<Int>
+
+    @Query("SELECT * FROM notification_logs ORDER BY id DESC LIMIT 1")
+    fun getLatestLog(): Flow<NotificationLog?>
+
+    @Query("SELECT COUNT(*) FROM notification_logs WHERE receivedAt LIKE :todayPrefix || '%'")
+    fun getTodayLogsCount(todayPrefix: String): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM notification_logs WHERE status = 'SUCCESS' AND receivedAt LIKE :todayPrefix || '%'")
+    fun getTodaySuccessCount(todayPrefix: String): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM notification_logs WHERE status = 'FAILED' AND receivedAt LIKE :todayPrefix || '%'")
+    fun getTodayFailedCount(todayPrefix: String): Flow<Int>
+
     @Query("SELECT COUNT(*) FROM notification_logs")
     fun getTotalLogsCount(): Flow<Int>
 

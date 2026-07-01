@@ -1,33 +1,17 @@
 package com.example.ui.screens
 
-import android.os.Build
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Devices
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.RssFeed
-import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Storage
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -41,9 +25,17 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ui.components.DuoCard
+import com.example.ui.theme.DuoBlue
+import com.example.ui.theme.DuoBlueDark
+import com.example.ui.theme.DuoGrayLight
+import com.example.ui.theme.DuoGreen
+import com.example.ui.theme.DuoGreenDark
+import com.example.ui.theme.DuoOrange
+import com.example.ui.theme.DuoOrangeDark
+import com.example.ui.theme.DuoRed
 
 @Composable
 fun AboutScreen(
@@ -54,9 +46,10 @@ fun AboutScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .verticalScroll(scrollState)
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
         // App Logo and Info Center
         Column(
@@ -68,15 +61,16 @@ fun AboutScreen(
         ) {
             Box(
                 modifier = Modifier
-                    .size(80.dp)
+                    .size(90.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
+                    .background(DuoGreen.copy(alpha = 0.12f)),
                 contentAlignment = Alignment.Center
             ) {
+                // Playful canvas mascot or Share icon
                 Icon(
                     imageVector = Icons.Default.Share,
                     contentDescription = "Notification Bridge Logo",
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = DuoGreenDark,
                     modifier = Modifier.size(44.dp)
                 )
             }
@@ -86,13 +80,16 @@ fun AboutScreen(
             Text(
                 text = "Notification Bridge",
                 style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.ExtraBold,
+                fontWeight = FontWeight.Black,
                 color = MaterialTheme.colorScheme.onSurface
             )
+
+            Spacer(modifier = Modifier.height(2.dp))
 
             Text(
                 text = "Version 1.0.0 (Native Kotlin)",
                 style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -101,7 +98,7 @@ fun AboutScreen(
         Text(
             text = "System Integration Flow",
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
+            fontWeight = FontWeight.Black,
             modifier = Modifier.padding(horizontal = 4.dp)
         )
 
@@ -110,7 +107,8 @@ fun AboutScreen(
             title = "Notification Intercept",
             description = "Subscribes to standard Android notification streams using NotificationListenerService. Reads app titles, content bodies, package tags, and device properties.",
             icon = Icons.Default.RssFeed,
-            tintColor = MaterialTheme.colorScheme.primary
+            tintColor = DuoBlue,
+            shadowColor = DuoBlueDark
         )
 
         ArchitectureItem(
@@ -118,7 +116,8 @@ fun AboutScreen(
             title = "Enforced Local Persistence",
             description = "Saves intercepted updates immediately to local Room DB. Prevents loss of events when application is closed or system restarts.",
             icon = Icons.Default.Storage,
-            tintColor = Color(0xFFE65100)
+            tintColor = DuoOrange,
+            shadowColor = DuoOrangeDark
         )
 
         ArchitectureItem(
@@ -126,7 +125,8 @@ fun AboutScreen(
             title = "Encrypted Preferences",
             description = "App config, URLs, and token codes are locked under 256-bit AES GCM cryptography using Jetpack Security-Crypto.",
             icon = Icons.Default.Lock,
-            tintColor = Color(0xFF2E7D32)
+            tintColor = DuoGreen,
+            shadowColor = DuoGreenDark
         )
 
         ArchitectureItem(
@@ -134,31 +134,30 @@ fun AboutScreen(
             title = "Automated Upload Queue",
             description = "Uses Android WorkManager to fire uploads in background. Re-schedules offline failures using robust exponential backoffs.",
             icon = Icons.Default.Devices,
-            tintColor = Color(0xFF00838F)
+            tintColor = DuoBlue,
+            shadowColor = DuoBlueDark
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         // Technical Spec Card
-        Card(
+        DuoCard(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-            )
+            backgroundColor = MaterialTheme.colorScheme.surface,
+            borderColor = DuoGrayLight,
+            shadowColor = DuoGrayLight.copy(alpha = 0.4f)
         ) {
             Column(
-                modifier = Modifier.padding(18.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Text(
                     text = "Application Specifications",
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.secondary
+                    fontWeight = FontWeight.Black,
+                    color = DuoGreen
                 )
 
-                HorizontalDivider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
+                HorizontalDivider(color = DuoGrayLight, thickness = 1.5.dp)
 
                 SpecRow(label = "Platform", value = "Android Native 100% Kotlin")
                 SpecRow(label = "UI Engine", value = "Jetpack Compose (Material 3)")
@@ -169,6 +168,22 @@ fun AboutScreen(
                 SpecRow(label = "Minimum SDK", value = "API 26 (Android 8.0 Oreo)")
             }
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "Copyright © 2026 • Build with love by Dadan Hidayat",
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        }
     }
 }
 
@@ -178,17 +193,18 @@ fun ArchitectureItem(
     title: String,
     description: String,
     icon: ImageVector,
-    tintColor: Color
+    tintColor: Color,
+    shadowColor: Color
 ) {
-    Card(
+    DuoCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)
-        )
+        backgroundColor = tintColor.copy(alpha = 0.05f),
+        borderColor = tintColor.copy(alpha = 0.4f),
+        shadowColor = shadowColor.copy(alpha = 0.12f),
+        shadowHeight = 3.dp
     ) {
         Row(
-            modifier = Modifier.padding(14.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.Top
         ) {
             Box(
@@ -212,13 +228,14 @@ fun ArchitectureItem(
                 Text(
                     text = "Step $step: $title",
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.Black,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Bold,
                     lineHeight = 18.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -236,12 +253,13 @@ fun SpecRow(label: String, value: String) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.Bold,
+            fontWeight = FontWeight.Black,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
             text = value,
             style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Bold,
             fontFamily = FontFamily.Monospace,
             color = MaterialTheme.colorScheme.onSurface
         )

@@ -7,45 +7,45 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.NotificationImportant
-import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material3.DrawerValue
+import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.NotificationImportant
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalDrawerSheet
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.NavigationDrawerItem
-import androidx.compose.material3.NavigationDrawerItemDefaults
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -67,7 +67,7 @@ import com.example.ui.screens.LogsScreen
 import com.example.ui.screens.SettingsScreen
 import com.example.ui.theme.MyApplicationTheme
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
+
 
 class MainActivity : ComponentActivity() {
 
@@ -96,8 +96,6 @@ class MainActivity : ComponentActivity() {
 fun MainAppStructure(viewModel: MainViewModel) {
     val context = LocalContext.current
     val navController = rememberNavController()
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
 
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry?.destination?.route ?: "dashboard"
@@ -111,145 +109,141 @@ fun MainAppStructure(viewModel: MainViewModel) {
         }
     }
 
-    // Modal Drawer Items setup
-    val menuItems = listOf(
-        DrawerItemSpec("Dashboard", "dashboard", Icons.Default.Dashboard, "dashboard_menu_item"),
-        DrawerItemSpec("Activity Logs", "logs", Icons.Default.History, "logs_menu_item"),
-        DrawerItemSpec("Settings", "settings", Icons.Default.Settings, "settings_menu_item"),
-        DrawerItemSpec("About Info", "about", Icons.Default.Info, "about_menu_item")
-    )
+    var showSplash by remember { mutableStateOf(true) }
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            ModalDrawerSheet(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(300.dp)
-                    .testTag("navigation_drawer_sheet"),
-                drawerShape = RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp)
-            ) {
-                // Header of Drawer
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.primaryContainer)
-                        .padding(horizontal = 24.dp, vertical = 32.dp),
-                    contentAlignment = Alignment.CenterStart
-                ) {
-                    Column {
-                        Box(
-                            modifier = Modifier
-                                .size(48.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(MaterialTheme.colorScheme.primary),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Share,
-                                contentDescription = "Logo",
-                                tint = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.size(28.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(14.dp))
-                        Text(
-                            text = "Notification Bridge",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        Text(
-                            text = "V1.0.0 • Local Listener",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                        )
-                    }
-                }
+    if (showSplash) {
+        SplashScreen(onTimeout = { showSplash = false })
+    } else {
+        // Bottom Navigation Items setup
+        val navItems = listOf(
+            NavItemSpec("Dashboard", "dashboard", Icons.Default.Dashboard, "dashboard_nav_item"),
+            NavItemSpec("Logs", "logs", Icons.Default.History, "logs_nav_item"),
+            NavItemSpec("Settings", "settings", Icons.Default.Settings, "settings_nav_item"),
+            NavItemSpec("About", "about", Icons.Default.Info, "about_nav_item")
+        )
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Drawer Links
-                menuItems.forEach { item ->
-                    val selected = currentRoute == item.route
-                    NavigationDrawerItem(
-                        label = { Text(item.title, fontWeight = FontWeight.SemiBold) },
-                        selected = selected,
-                        onClick = {
-                            scope.launch { drawerState.close() }
-                            if (currentRoute != item.route) {
-                                navController.navigate(item.route) {
-                                    popUpTo("dashboard") { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            }
-                        },
-                        icon = { Icon(imageVector = item.icon, contentDescription = item.title) },
-                        modifier = Modifier
-                            .padding(NavigationDrawerItemDefaults.ItemPadding)
-                            .testTag(item.testTag),
-                        shape = RoundedCornerShape(14.dp)
-                    )
-                }
-            }
-        }
-    ) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             topBar = {
                 TopAppBar(
                     title = {
-                        Text(
-                            text = when (currentRoute) {
-                                "dashboard" -> "Dashboard"
-                                "logs" -> "Activity Logs"
-                                "settings" -> "Bridge Configuration"
-                                "about" -> "About Info"
-                                else -> "Notification Bridge"
-                            },
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(
-                            onClick = { scope.launch { drawerState.open() } },
-                            modifier = Modifier.testTag("hamburger_menu_button")
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Menu,
-                                contentDescription = "Open Navigation Menu"
+                            // Playful Duolingo-like mini icon
+                            Box(
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(MaterialTheme.colorScheme.primary),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Share,
+                                    contentDescription = "Logo",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(18.dp)
+                               )
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = when (currentRoute) {
+                                    "dashboard" -> "Dashboard"
+                                    "logs" -> "Activity Logs"
+                                    "settings" -> "Settings"
+                                    "about" -> "About Info"
+                                    else -> "Bridge"
+                                },
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.ExtraBold
                             )
                         }
                     },
                     actions = {
-                        // Small indicator of service state
-                        Box(
-                            modifier = Modifier.padding(end = 16.dp),
-                            contentAlignment = Alignment.Center
+                        // Beautiful Duolingo-style status badge pill
+                        val containerColor = if (isServiceEnabled) Color(0xFFE8F5E9) else Color(0xFFFFEBEE)
+                        val contentColor = if (isServiceEnabled) Color(0xFF2E7D32) else Color(0xFFC62828)
+                        val labelText = if (isServiceEnabled) "ACTIVE" else "INACTIVE"
+                        val icon = if (isServiceEnabled) Icons.Default.NotificationsActive else Icons.Default.NotificationImportant
+
+                        Row(
+                            modifier = Modifier
+                                .padding(end = 16.dp)
+                                .clip(RoundedCornerShape(100.dp))
+                                .background(containerColor)
+                                .padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            if (isServiceEnabled) {
-                                Icon(
-                                    imageVector = Icons.Default.NotificationsActive,
-                                    contentDescription = "Service Active",
-                                    tint = Color(0xFF2E7D32),
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            } else {
-                                Icon(
-                                    imageVector = Icons.Default.NotificationImportant,
-                                    contentDescription = "Service Disabled",
-                                    tint = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = labelText,
+                                tint = contentColor,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = labelText,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Black,
+                                color = contentColor
+                            )
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        titleContentColor = MaterialTheme.colorScheme.onSurface
+                        containerColor = MaterialTheme.colorScheme.background,
+                        titleContentColor = MaterialTheme.colorScheme.onBackground
                     )
                 )
+            },
+            bottomBar = {
+                NavigationBar(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    tonalElevation = 0.dp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("bottom_nav_bar")
+                        .background(MaterialTheme.colorScheme.background)
+                        .navigationBarsPadding(),
+                    windowInsets = WindowInsets(0, 0, 0, 0)
+                ) {
+                    navItems.forEach { item ->
+                        val selected = currentRoute == item.route
+                        NavigationBarItem(
+                            selected = selected,
+                            onClick = {
+                                if (currentRoute != item.route) {
+                                    navController.navigate(item.route) {
+                                        popUpTo("dashboard") { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                }
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = item.icon,
+                                    contentDescription = item.title,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            },
+                            label = {
+                                Text(
+                                    text = item.title,
+                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                    fontSize = 11.sp
+                                )
+                            },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = MaterialTheme.colorScheme.primary,
+                                selectedTextColor = MaterialTheme.colorScheme.primary,
+                                indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                            ),
+                            modifier = Modifier.testTag(item.testTag)
+                        )
+                    }
+                }
             }
         ) { innerPadding ->
             NavHost(
@@ -286,7 +280,60 @@ fun MainAppStructure(viewModel: MainViewModel) {
     }
 }
 
-data class DrawerItemSpec(
+@Composable
+fun SplashScreen(onTimeout: () -> Unit) {
+    LaunchedEffect(Unit) {
+        delay(2200)
+        onTimeout()
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            com.example.ui.screens.DuoMascotDrawing(
+                modifier = Modifier
+                    .size(150.dp)
+                    .padding(8.dp)
+            )
+            Spacer(modifier = Modifier.height(20.dp))
+            Text(
+                text = "Invitnesia Notif",
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Black,
+                color = Color(0xFF58CC02) // Duo green!
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = "Automated Notification Bridge",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.Gray
+            )
+            Spacer(modifier = Modifier.height(48.dp))
+            androidx.compose.material3.CircularProgressIndicator(
+                color = Color(0xFF58CC02),
+                strokeWidth = 3.5.dp,
+                modifier = Modifier.size(28.dp)
+            )
+            Spacer(modifier = Modifier.height(64.dp))
+            Text(
+                text = "Build with love by Dadan Hidayat",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Black,
+                color = Color.LightGray
+            )
+        }
+    }
+}
+
+data class NavItemSpec(
     val title: String,
     val route: String,
     val icon: androidx.compose.ui.graphics.vector.ImageVector,

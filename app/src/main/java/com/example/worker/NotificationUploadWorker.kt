@@ -18,9 +18,13 @@ class NotificationUploadWorker(
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result {
+        val prefs = EncryptedSharedPreferencesManager(applicationContext)
+        if (!prefs.monitoringEnabled) {
+            return Result.success()
+        }
+
         val database = AppDatabase.getDatabase(applicationContext)
         val repository = NotificationRepository(database.notificationLogDao())
-        val prefs = EncryptedSharedPreferencesManager(applicationContext)
         val networkClient = NetworkClient(applicationContext, prefs)
 
         val pendingLogs = repository.getPendingLogs()
