@@ -1,0 +1,21 @@
+{
+  "app_name": "Notification Bridge",
+  "application_id": "com.aistudio.notificationbridge.qyznxw",
+  "version_name": "1.0",
+  "version_code": 1,
+  "build_type": "Release (Signed with debugConfig Key)",
+  "signing_certificate": {
+    "owner": "CN=Android Debug, O=Android, C=US",
+    "issuer": "CN=Android Debug, O=Android, C=US",
+    "serial_number": "9b25d1a33c75419f",
+    "valid_from": "Wed Jul 01 18:44:33 UTC 2026",
+    "valid_until": "Sun Nov 16 18:44:33 UTC 2053",
+    "fingerprints": {
+      "sha1": "EC:50:9C:AA:A0:CD:AF:FB:24:16:CF:45:81:CA:AE:5B:5B:3B:6A:D4",
+      "sha256": "21:8C:81:C8:E8:49:1A:47:1C:86:BE:89:70:B7:6B:53:AF:31:8B:9D:FE:D0:27:14:25:A6:C8:F9:50:B6:33:A1"
+    }
+  },
+  "apk_filename": "app-release.apk",
+  "location": "/app-release.apk",
+  "status": "Ready for installation"
+}
