@@ -1,0 +1,6 @@
+{
+  "name": "Notification Bridge",
+  "description": "Android Native Notification Listener service that processes notifications from monitored apps and forwards them to a secure backend.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
