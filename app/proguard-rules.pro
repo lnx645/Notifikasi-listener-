@@ -19,10 +19,17 @@
 #   public *;
 #}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Keep the original source file name and line numbers for debugging stack traces.
+-keepattributes SourceFile,LineNumberTable
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Moshi ProGuard Rules
+-keep @com.squareup.moshi.JsonClass class * { *; }
+-keep class *JsonAdapter { *; }
+-keepclassmembers class * {
+    @com.squareup.moshi.Json <fields>;
+}
+
+# Keep our data models to avoid any issues with database or JSON parsing
+-keep class com.example.model.** { *; }
+-keep class com.example.network.** { *; }
+
