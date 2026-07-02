@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import com.example.ui.MainViewModel
 import com.example.ui.components.DuoButton
 import com.example.ui.components.DuoCard
+import com.example.ui.components.DuoTextField
 import com.example.ui.theme.*
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -194,23 +195,17 @@ fun SettingsScreen(
 
                 // Backend URL Input with HTTPS Only Validation
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    OutlinedTextField(
+                    DuoTextField(
                         value = backendUrl,
                         onValueChange = { backendUrl = it },
-                        label = { Text("Base URL API (HTTPS Only)", fontWeight = FontWeight.Bold) },
-                        placeholder = { Text("https://api.example.com") },
+                        label = "Base URL API (HTTPS Only)",
+                        placeholder = "https://api.example.com",
                         singleLine = true,
                         isError = !isBackendUrlValid && backendUrl.isNotEmpty(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = DuoGreen,
-                            unfocusedBorderColor = DuoGrayLight,
-                            focusedLabelColor = DuoGreen,
-                            errorBorderColor = DuoRed
-                        ),
+                        activeColor = DuoGreen,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .testTag("backend_url_input"),
-                        shape = RoundedCornerShape(12.dp)
+                            .testTag("backend_url_input")
                     )
                     if (!isBackendUrlValid && backendUrl.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(4.dp))
@@ -224,17 +219,13 @@ fun SettingsScreen(
                     }
                 }
 
-                OutlinedTextField(
+                DuoTextField(
                     value = authToken,
                     onValueChange = { authToken = it },
-                    label = { Text("Authorization Token (Bearer)", fontWeight = FontWeight.Bold) },
-                    placeholder = { Text("Kosongkan jika tidak memakai token") },
+                    label = "Authorization Token (Bearer)",
+                    placeholder = "Kosongkan jika tidak memakai token",
                     singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = DuoGreen,
-                        unfocusedBorderColor = DuoGrayLight,
-                        focusedLabelColor = DuoGreen
-                    ),
+                    activeColor = DuoGreen,
                     visualTransformation = if (tokenVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
                         IconButton(onClick = { tokenVisible = !tokenVisible }) {
@@ -247,46 +238,34 @@ fun SettingsScreen(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .testTag("auth_token_input"),
-                    shape = RoundedCornerShape(12.dp)
+                        .testTag("auth_token_input")
                 )
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    OutlinedTextField(
+                    DuoTextField(
                         value = deviceName,
                         onValueChange = { deviceName = it },
-                        label = { Text("Device Name", fontWeight = FontWeight.Bold) },
+                        label = "Device Name",
                         singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = DuoGreen,
-                            unfocusedBorderColor = DuoGrayLight,
-                            focusedLabelColor = DuoGreen
-                        ),
+                        activeColor = DuoGreen,
                         modifier = Modifier
                             .weight(1.1f)
-                            .testTag("device_name_input"),
-                        shape = RoundedCornerShape(12.dp)
+                            .testTag("device_name_input")
                     )
 
-                    OutlinedTextField(
+                    DuoTextField(
                         value = applicationId,
                         onValueChange = { applicationId = it },
-                        label = { Text("Application ID", fontWeight = FontWeight.Bold) },
+                        label = "Application ID",
                         singleLine = true,
                         isError = !isAppIdValid,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = DuoGreen,
-                            unfocusedBorderColor = DuoGrayLight,
-                            focusedLabelColor = DuoGreen,
-                            errorBorderColor = DuoRed
-                        ),
+                        activeColor = DuoGreen,
                         modifier = Modifier
                             .weight(1f)
-                            .testTag("app_id_input"),
-                        shape = RoundedCornerShape(12.dp)
+                            .testTag("app_id_input")
                     )
                 }
 
@@ -295,23 +274,17 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        OutlinedTextField(
+                        DuoTextField(
                             value = retryCount,
                             onValueChange = { if (it.isEmpty() || it.all { char -> char.isDigit() }) retryCount = it },
-                            label = { Text("Max Retries", fontWeight = FontWeight.Bold) },
+                            label = "Max Retries",
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             singleLine = true,
                             isError = !isRetryCountValid,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = DuoGreen,
-                                unfocusedBorderColor = DuoGrayLight,
-                                focusedLabelColor = DuoGreen,
-                                errorBorderColor = DuoRed
-                            ),
+                            activeColor = DuoGreen,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .testTag("retry_count_input"),
-                            shape = RoundedCornerShape(12.dp)
+                                .testTag("retry_count_input")
                         )
                         if (!isRetryCountValid) {
                             Text(
@@ -325,23 +298,17 @@ fun SettingsScreen(
                     }
 
                     Column(modifier = Modifier.weight(1f)) {
-                        OutlinedTextField(
+                        DuoTextField(
                             value = connectionTimeout,
                             onValueChange = { if (it.isEmpty() || it.all { char -> char.isDigit() }) connectionTimeout = it },
-                            label = { Text("Timeout (sec)", fontWeight = FontWeight.Bold) },
+                            label = "Timeout (sec)",
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             singleLine = true,
                             isError = !isTimeoutValid,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = DuoGreen,
-                                unfocusedBorderColor = DuoGrayLight,
-                                focusedLabelColor = DuoGreen,
-                                errorBorderColor = DuoRed
-                            ),
+                            activeColor = DuoGreen,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .testTag("timeout_input"),
-                            shape = RoundedCornerShape(12.dp)
+                                .testTag("timeout_input")
                         )
                         if (!isTimeoutValid) {
                             Text(
@@ -454,21 +421,16 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    OutlinedTextField(
+                    DuoTextField(
                         value = newPackageInput,
                         onValueChange = { newPackageInput = it.trim() },
-                        label = { Text("Package Name Aplikasi", fontWeight = FontWeight.Bold) },
-                        placeholder = { Text("com.whatsapp atau lainnya") },
+                        label = "Package Name Aplikasi",
+                        placeholder = "com.whatsapp atau lainnya",
                         singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = DuoBlue,
-                            unfocusedBorderColor = DuoGrayLight,
-                            focusedLabelColor = DuoBlue
-                        ),
+                        activeColor = DuoBlue,
                         modifier = Modifier
                             .weight(1f)
-                            .testTag("new_package_input"),
-                        shape = RoundedCornerShape(12.dp)
+                            .testTag("new_package_input")
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     IconButton(
