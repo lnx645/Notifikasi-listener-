@@ -86,7 +86,12 @@ fun SettingsScreen(
     LaunchedEffect(debugModeState) { debugMode = debugModeState }
 
     // --- FORM VALIDATION ---
-    val isBackendUrlValid = backendUrl.trim().startsWith("https://")
+    val backendUrlTrimmed = backendUrl.trim()
+    val isHttps = backendUrlTrimmed.startsWith("https://")
+    val isHttp = backendUrlTrimmed.startsWith("http://")
+    
+    // Valid if starts with https://, or if http:// is used AND debugMode is checked
+    val isBackendUrlValid = isHttps || (isHttp && debugMode)
     val isTimeoutValid = (connectionTimeout.toIntOrNull() ?: 0) in 1..120
     val isRetryCountValid = (retryCount.toIntOrNull() ?: 0) in 0..10
     val isAppIdValid = applicationId.trim().isNotEmpty()
@@ -193,29 +198,60 @@ fun SettingsScreen(
                     color = DuoGreen
                 )
 
-                // Backend URL Input with HTTPS Only Validation
+                // Backend URL Input with HTTPS/HTTP Validation & Warnings
                 Column(modifier = Modifier.fillMaxWidth()) {
+                    val isUrlError = backendUrl.isNotEmpty() && !isHttps && (!isHttp || !debugMode)
+                    val activeColorToUse = if (isHttp && debugMode) DuoOrange else DuoGreen
+
                     DuoTextField(
                         value = backendUrl,
                         onValueChange = { backendUrl = it },
-                        label = "Base URL API (HTTPS Only)",
+                        label = "Base URL API",
                         placeholder = "https://api.example.com",
                         singleLine = true,
-                        isError = !isBackendUrlValid && backendUrl.isNotEmpty(),
-                        activeColor = DuoGreen,
+                        isError = isUrlError,
+                        activeColor = activeColorToUse,
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("backend_url_input")
                     )
-                    if (!isBackendUrlValid && backendUrl.isNotEmpty()) {
+                    if (backendUrl.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "URL harus dimulai dengan https:// demi keamanan data.",
-                            color = DuoRed,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 4.dp)
-                        )
+                        if (isHttps) {
+                            Text(
+                                text = "✓ URL aman menggunakan HTTPS.",
+                                color = DuoGreen,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 4.dp)
+                            )
+                        } else if (isHttp) {
+                            if (debugMode) {
+                                Text(
+                                    text = "⚠️ Peringatan: Menggunakan HTTP tidak aman! Tetapi konfigurasi ini diizinkan untuk disimpan karena Mode Debug aktif.",
+                                    color = DuoOrange,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 4.dp)
+                                )
+                            } else {
+                                Text(
+                                    text = "❌ Error: Menggunakan HTTP tidak aman! Aktifkan 'Debug Mode' di bawah jika Anda ingin tetap menyimpannya untuk pengembangan.",
+                                    color = DuoRed,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 4.dp)
+                                )
+                            }
+                        } else {
+                            Text(
+                                text = "❌ Error: URL harus dimulai dengan http:// atau https://.",
+                                color = DuoRed,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 4.dp)
+                            )
+                        }
                     }
                 }
 

@@ -62,6 +62,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.ui.MainViewModel
 import com.example.ui.screens.AboutScreen
+import com.example.ui.screens.ApiDocsScreen
 import com.example.ui.screens.DashboardScreen
 import com.example.ui.screens.LogsScreen
 import com.example.ui.screens.SettingsScreen
@@ -125,123 +126,127 @@ fun MainAppStructure(viewModel: MainViewModel) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             topBar = {
-                TopAppBar(
-                    title = {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            // Playful Duolingo-like mini icon
-                            Box(
+                if (currentRoute != "api_docs") {
+                    TopAppBar(
+                        title = {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // Playful Duolingo-like mini icon
+                                Box(
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(MaterialTheme.colorScheme.primary),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Share,
+                                        contentDescription = "Logo",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Text(
+                                    text = when (currentRoute) {
+                                        "dashboard" -> "Dashboard"
+                                        "logs" -> "Activity Logs"
+                                        "settings" -> "Settings"
+                                        "about" -> "About Info"
+                                        else -> "Bridge"
+                                    },
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.ExtraBold
+                                )
+                            }
+                        },
+                        actions = {
+                            // Beautiful Duolingo-style status badge pill
+                            val containerColor = if (isServiceEnabled) Color(0xFFE8F5E9) else Color(0xFFFFEBEE)
+                            val contentColor = if (isServiceEnabled) Color(0xFF2E7D32) else Color(0xFFC62828)
+                            val labelText = if (isServiceEnabled) "ACTIVE" else "INACTIVE"
+                            val icon = if (isServiceEnabled) Icons.Default.NotificationsActive else Icons.Default.NotificationImportant
+
+                            Row(
                                 modifier = Modifier
-                                    .size(32.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(MaterialTheme.colorScheme.primary),
-                                contentAlignment = Alignment.Center
+                                    .padding(end = 16.dp)
+                                    .clip(RoundedCornerShape(100.dp))
+                                    .background(containerColor)
+                                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Share,
-                                    contentDescription = "Logo",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(18.dp)
-                               )
+                                    imageVector = icon,
+                                    contentDescription = labelText,
+                                    tint = contentColor,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = labelText,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Black,
+                                    color = contentColor
+                                )
                             }
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Text(
-                                text = when (currentRoute) {
-                                    "dashboard" -> "Dashboard"
-                                    "logs" -> "Activity Logs"
-                                    "settings" -> "Settings"
-                                    "about" -> "About Info"
-                                    else -> "Bridge"
-                                },
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.ExtraBold
-                            )
-                        }
-                    },
-                    actions = {
-                        // Beautiful Duolingo-style status badge pill
-                        val containerColor = if (isServiceEnabled) Color(0xFFE8F5E9) else Color(0xFFFFEBEE)
-                        val contentColor = if (isServiceEnabled) Color(0xFF2E7D32) else Color(0xFFC62828)
-                        val labelText = if (isServiceEnabled) "ACTIVE" else "INACTIVE"
-                        val icon = if (isServiceEnabled) Icons.Default.NotificationsActive else Icons.Default.NotificationImportant
-
-                        Row(
-                            modifier = Modifier
-                                .padding(end = 16.dp)
-                                .clip(RoundedCornerShape(100.dp))
-                                .background(containerColor)
-                                .padding(horizontal = 12.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = icon,
-                                contentDescription = labelText,
-                                tint = contentColor,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = labelText,
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Black,
-                                color = contentColor
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background,
-                        titleContentColor = MaterialTheme.colorScheme.onBackground
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.background,
+                            titleContentColor = MaterialTheme.colorScheme.onBackground
+                        )
                     )
-                )
+                }
             },
             bottomBar = {
-                NavigationBar(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    tonalElevation = 0.dp,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("bottom_nav_bar")
-                        .background(MaterialTheme.colorScheme.background)
-                        .navigationBarsPadding(),
-                    windowInsets = WindowInsets(0, 0, 0, 0)
-                ) {
-                    navItems.forEach { item ->
-                        val selected = currentRoute == item.route
-                        NavigationBarItem(
-                            selected = selected,
-                            onClick = {
-                                if (currentRoute != item.route) {
-                                    navController.navigate(item.route) {
-                                        popUpTo("dashboard") { saveState = true }
-                                        launchSingleTop = true
-                                        restoreState = true
+                if (currentRoute != "api_docs") {
+                    NavigationBar(
+                        containerColor = MaterialTheme.colorScheme.background,
+                        tonalElevation = 0.dp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("bottom_nav_bar")
+                            .background(MaterialTheme.colorScheme.background)
+                            .navigationBarsPadding(),
+                        windowInsets = WindowInsets(0, 0, 0, 0)
+                    ) {
+                        navItems.forEach { item ->
+                            val selected = currentRoute == item.route
+                            NavigationBarItem(
+                                selected = selected,
+                                onClick = {
+                                    if (currentRoute != item.route) {
+                                        navController.navigate(item.route) {
+                                            popUpTo("dashboard") { saveState = true }
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
                                     }
-                                }
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = item.icon,
-                                    contentDescription = item.title,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            },
-                            label = {
-                                Text(
-                                    text = item.title,
-                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                                    fontSize = 11.sp
-                                )
-                            },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = MaterialTheme.colorScheme.primary,
-                                selectedTextColor = MaterialTheme.colorScheme.primary,
-                                indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                            ),
-                            modifier = Modifier.testTag(item.testTag)
-                        )
+                                },
+                                icon = {
+                                    Icon(
+                                        imageVector = item.icon,
+                                        contentDescription = item.title,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                },
+                                label = {
+                                    Text(
+                                        text = item.title,
+                                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                        fontSize = 11.sp
+                                    )
+                                },
+                                colors = NavigationBarItemDefaults.colors(
+                                    selectedIconColor = MaterialTheme.colorScheme.primary,
+                                    selectedTextColor = MaterialTheme.colorScheme.primary,
+                                    indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                ),
+                                modifier = Modifier.testTag(item.testTag)
+                            )
+                        }
                     }
                 }
             }
@@ -273,7 +278,15 @@ fun MainAppStructure(viewModel: MainViewModel) {
                 }
 
                 composable("about") {
-                    AboutScreen()
+                    AboutScreen(
+                        onReadDocsClick = { navController.navigate("api_docs") }
+                    )
+                }
+
+                composable("api_docs") {
+                    ApiDocsScreen(
+                        onNavigateBack = { navController.popBackStack() }
+                    )
                 }
             }
         }

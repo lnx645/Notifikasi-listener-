@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dokumentasi API - Notification Bridge</title>
+    <style>
+        :root {
+            --primary-color: #58CC02;
+            --primary-dark: #46a302;
+            --secondary-color: #1cb0f6;
+            --warning-color: #ff9600;
+            --danger-color: #ff4b4b;
+            --bg-color: #f7f7f7;
+            --card-bg: #ffffff;
+            --text-main: #3c3c3c;
+            --text-muted: #777777;
+            --border-color: #e5e5e5;
+            --code-bg: #2b2b2b;
+            --code-text: #f8f8f2;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 16px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            padding: 24px 16px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            font-size: 14px;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 0 var(--border-color);
+        }
+
+        .card h2 {
+            font-size: 18px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .card h2 .badge {
+            margin-left: 8px;
+        }
+
+        p {
+            font-size: 14px;
+            margin-bottom: 12px;
+            color: var(--text-main);
+        }
+
+        ul, ol {
+            margin-left: 20px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        li {
+            margin-bottom: 6px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 800;
+            border-radius: 8px;
+            text-transform: uppercase;
+            color: white;
+        }
+
+        .badge.post {
+            background-color: var(--primary-color);
+            box-shadow: 0 2px 0 var(--primary-dark);
+        }
+
+        .badge.get {
+            background-color: var(--secondary-color);
+            box-shadow: 0 2px 0 #1899d6;
+        }
+
+        .badge.warning {
+            background-color: var(--warning-color);
+            box-shadow: 0 2px 0 #cc7800;
+        }
+
+        .badge.danger {
+            background-color: var(--danger-color);
+            box-shadow: 0 2px 0 #cc3c3c;
+        }
+
+        .method-info {
+            background-color: #f1f1f1;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 13px;
+            margin-bottom: 16px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .method-path {
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 13px;
+        }
+
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f8f8f8;
+            font-weight: 700;
+        }
+
+        .field-name {
+            font-family: monospace;
+            font-weight: bold;
+            color: #d63384;
+        }
+
+        .field-type {
+            font-family: monospace;
+            color: #6f42c1;
+            font-size: 12px;
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 14px;
+            border-radius: 12px;
+            overflow-x: auto;
+            font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+            font-size: 12.5px;
+            margin: 12px 0;
+            border: 2px solid #202020;
+        }
+
+        code {
+            font-family: monospace;
+            background-color: #eaeaea;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #c7254e;
+        }
+
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            color: inherit;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 32px;
+            margin-bottom: 16px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Dokumentasi API Bridge</h1>
+            <p>Integrasikan Notifikasi Android dengan Server Mandiri Anda</p>
+        </header>
+
+        <!-- Pendahuluan -->
+        <div class="card">
+            <h2>Pengenalan</h2>
+            <p><strong>Notification Bridge</strong> adalah aplikasi Android yang berfungsi untuk meneruskan (bridge) setiap notifikasi masuk di perangkat Android ke server backend kustom Anda secara real-time.</p>
+            <p>Aplikasi ini sangat cocok digunakan untuk otomasi sistem, integrasi chatbot, pencatatan transaksi otomatis (seperti mutasi e-wallet), maupun sinkronisasi notifikasi antar perangkat.</p>
+        </div>
+
+        <!-- Autentikasi -->
+        <div class="card">
+            <h2>Skema Keamanan (Auth Token)</h2>
+            <p>Jika Anda mengaktifkan pengaturan <strong>Auth Token</strong> di menu Settings aplikasi, setiap request HTTP yang dikirimkan oleh aplikasi ke server Anda akan menyertakan Header otorisasi standar:</p>
+            <pre>Authorization: Bearer &lt;Token_Anda&gt;</pre>
+            <p>Server Anda disarankan untuk memeriksa header ini guna memastikan bahwa data yang masuk benar-benar berasal dari perangkat terpercaya Anda.</p>
+        </div>
+
+        <!-- POST /notification -->
+        <div class="card">
+            <h2>
+                <span class="badge post">POST</span>
+                <span style="margin-left: 8px;">Kirim Notifikasi</span>
+            </h2>
+            <p>Dipanggil secara otomatis oleh aplikasi setiap kali mendeteksi ada notifikasi masuk baru di perangkat Anda (sesuai filter).</p>
+            
+            <div class="method-info">
+                <span class="badge post" style="font-size:10px; padding:2px 6px;">POST</span>
+                <span class="method-path">[BASE_URL]/notification</span>
+            </div>
+
+            <p><strong>Header Request:</strong></p>
+            <ul>
+                <li><code>Content-Type: application/json</code></li>
+                <li><code>User-Agent: NotificationBridge/1.0</code></li>
+                <li><code>Authorization: Bearer [TOKEN]</code> (jika diaktifkan)</li>
+            </ul>
+
+            <p><strong>Payload Request (JSON):</strong></p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Parameter</th>
+                        <th>Tipe</th>
+                        <th>Keterangan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="field-name">device_id</td>
+                        <td class="field-type">String</td>
+                        <td>ID Unik Perangkat (didapatkan dari serial/Android ID).</td>
+                    </tr>
+                    <tr>
+                        <td class="field-name">device_name</td>
+                        <td class="field-type">String</td>
+                        <td>Nama Perangkat yang disetel di menu settings.</td>
+                    </tr>
+                    <tr>
+                        <td class="field-name">package_name</td>
+                        <td class="field-type">String</td>
+                        <td>Package ID aplikasi pengirim (cth: <code>com.whatsapp</code>).</td>
+                    </tr>
+                    <tr>
+                        <td class="field-name">application_name</td>
+                        <td class="field-type">String</td>
+                        <td>Nama Aplikasi pengirim (cth: <code>WhatsApp</code>).</td>
+                    </tr>
+                    <tr>
+                        <td class="field-name">title</td>
+                        <td class="field-type">String</td>
+                        <td>Judul notifikasi yang tampil di bar notifikasi.</td>
+                    </tr>
+                    <tr>
+                        <td class="field-name">message</td>
+                        <td class="field-type">String</td>
+                        <td>Isi pesan atau tubuh notifikasi.</td>
+                    </tr>
+                    <tr>
+                        <td class="field-name">big_text</td>
+                        <td class="field-type">String?</td>
+                        <td>Teks panjang opsional jika notifikasi memiliki preview panjang.</td>
+                    </tr>
+                    <tr>
+                        <td class="field-name">sub_text</td>
+                        <td class="field-type">String?</td>
+                        <td>Sub-teks opsional dari bar notifikasi.</td>
+                    </tr>
+                    <tr>
+                        <td class="field-name">received_at</td>
+                        <td class="field-type">String</td>
+                        <td>Waktu intercept lokal (Format ISO 8601).</td>
+                    </tr>
+                    <tr>
+                        <td class="field-name">android_version</td>
+                        <td class="field-type">String</td>
+                        <td>Versi SDK Android perangkat pengirim.</td>
+                    </tr>
+                    <tr>
+                        <td class="field-name">device_brand</td>
+                        <td class="field-type">String</td>
+                        <td>Merk manufaktur handphone (cth: <code>Samsung</code>).</td>
+                    </tr>
+                    <tr>
+                        <td class="field-name">device_model</td>
+                        <td class="field-type">String</td>
+                        <td>Model spesifik perangkat (cth: <code>SM-G991B</code>).</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p><strong>Contoh JSON Body:</strong></p>
+            <pre>{
+  "device_id": "89ab-cd34-ef56",
+  "device_name": "HP Utama Dadan",
+  "package_name": "com.whatsapp",
+  "application_name": "WhatsApp",
+  "title": "Budi",
+  "message": "Halo, jangan lupa kirim berkas integrasi API ya!",
+  "big_text": null,
+  "sub_text": null,
+  "received_at": "2026-07-01T18:58:00Z",
+  "android_version": "14",
+  "device_brand": "Google",
+  "device_model": "Pixel 8 Pro"
+}</pre>
+
+            <p><strong>Response yang Diharapkan:</strong></p>
+            <p>Server Anda harus mengembalikan HTTP Status Code <code>200 OK</code> (atau kode sukses <code>2xx</code> lainnya) dengan cepat untuk menandai bahwa data berhasil diterima dengan baik.</p>
+        </div>
+
+        <!-- GET /config/packages -->
+        <div class="card">
+            <h2>
+                <span class="badge get">GET</span>
+                <span style="margin-left: 8px;">Sinkronisasi Package</span>
+            </h2>
+            <p>Digunakan oleh aplikasi untuk mengambil daftar package name aplikasi mana saja yang ingin disaring (di-intercept). Jika endpoint ini mengembalikan daftar kosong, aplikasi akan menyaring semua notifikasi yang diizinkan oleh sistem.</p>
+            
+            <div class="method-info">
+                <span class="badge get" style="font-size:10px; padding:2px 6px;">GET</span>
+                <span class="method-path">[BASE_URL]/config/packages</span>
+            </div>
+
+            <p><strong>Header Request:</strong></p>
+            <ul>
+                <li><code>User-Agent: NotificationBridge/1.0</code></li>
+                <li><code>Authorization: Bearer [TOKEN]</code> (jika diaktifkan)</li>
+            </ul>
+
+            <p><strong>Response Body (JSON) yang Wajib Dikembalikan:</strong></p>
+            <pre>{
+  "packages": [
+    "com.whatsapp",
+    "id.dana",
+    "com.shopee.id",
+    "com.google.android.gm"
+  ]
+}</pre>
+        </div>
+
+        <!-- Contoh Implementasi Server -->
+        <div class="card">
+            <h2>Contoh Kode Backend (PHP)</h2>
+            <p>Berikut adalah contoh script PHP sederhana (<code>index.php</code>) untuk menerima notifikasi dan menyimpannya ke dalam file log di server Anda:</p>
+            <pre>&lt;?php
+// Ambil header otorisasi
+$headers = getallheaders();
+$authHeader = $headers['Authorization'] ?? '';
+
+// Verifikasi Token (Jika token diatur ke 'SANGATRAHASIA')
+if ($authHeader !== 'Bearer SANGATRAHASIA') {
+    http_response_code(401);
+    echo json_encode(["error" => "Unauthorized Access!"]);
+    exit;
+}
+
+// Ambil input JSON dari aplikasi
+$inputJSON = file_get_contents('php://input');
+$data = json_decode($inputJSON, true);
+
+if ($data) {
+    // Proses data (Contoh: simpan ke database atau kirim ke bot Telegram)
+    $logText = "[" . $data['received_at'] . "] " . $data['application_name'] . " - " . $data['title'] . ": " . $data['message'] . PHP_EOL;
+    file_put_contents('notif_bridge.log', $logText, FILE_APPEND);
+
+    // Balas dengan status sukses
+    http_response_code(200);
+    echo json_encode(["status" => "success", "message" => "Notification logged."]);
+} else {
+    http_response_code(400);
+    echo json_encode(["error" => "Invalid Payload"]);
+}</pre>
+        </div>
+
+        <div class="footer">
+            Copyright &copy; 2026 • Notification Bridge Client • Dibuat untuk Dadan Hidayat
+        </div>
+    </div>
+</body>
+</html>

@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ui.components.DuoButton
 import com.example.ui.components.DuoCard
 import com.example.ui.theme.DuoBlue
 import com.example.ui.theme.DuoBlueDark
@@ -39,6 +40,7 @@ import com.example.ui.theme.DuoRed
 
 @Composable
 fun AboutScreen(
+    onReadDocsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
@@ -167,6 +169,26 @@ fun AboutScreen(
                 SpecRow(label = "Target SDK", value = "API 36 (Android 16)")
                 SpecRow(label = "Minimum SDK", value = "API 26 (Android 8.0 Oreo)")
             }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Read Documentation Button
+        DuoButton(
+            onClick = onReadDocsClick,
+            containerColor = DuoBlue,
+            shadowColor = DuoBlueDark,
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("read_docs_button")
+        ) {
+            Text(
+                text = "BACA DOKUMENTASI API",
+                fontWeight = FontWeight.Black,
+                fontSize = 14.sp,
+                letterSpacing = 0.5.sp,
+                color = Color.White
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))

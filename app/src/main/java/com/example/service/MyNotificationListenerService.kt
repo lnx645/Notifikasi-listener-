@@ -84,10 +84,21 @@ class MyNotificationListenerService : NotificationListenerService() {
             .setOngoing(true)
             .build()
 
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            startForeground(99, notification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
-        } else {
-            startForeground(99, notification)
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                startForeground(99, notification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+            } else {
+                startForeground(99, notification)
+            }
+        } catch (e: Exception) {
+            Log.e("NotificationListener", "Failed to start foreground service: ${e.message}", e)
+            try {
+                val manager = getSystemService(android.content.Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+                manager.notify(99, notification)
+                Log.d("NotificationListener", "Showing regular fallback notification instead.")
+            } catch (ne: Exception) {
+                Log.e("NotificationListener", "Failed to show fallback notification: ${ne.message}", ne)
+            }
         }
     }
 
