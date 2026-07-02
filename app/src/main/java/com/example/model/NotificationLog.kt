@@ -18,5 +18,6 @@ data class NotificationLog(
     val deviceModel: String,
     val httpStatus: Int?,
     val retryCount: Int,
-    val status: String // "SUCCESS", "FAILED", "PENDING_RETRY"
+    val status: String, // "SUCCESS", "FAILED", "PENDING_RETRY"
+    val errorMessage: String? = null
 )

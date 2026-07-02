@@ -12,6 +12,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.example.model.NotificationLog
 import com.example.network.NetworkClient
+import com.example.network.NotificationPayload
 import com.example.storage.AppDatabase
 import com.example.storage.EncryptedSharedPreferencesManager
 import com.example.storage.NotificationRepository
@@ -124,6 +125,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     init {
         loadSettings()
         checkServiceStatus()
+        if (prefs.monitoringEnabled && _isServiceEnabled.value) {
+            val context = getApplication<Application>()
+            val intent = Intent(context, com.example.service.MyNotificationListenerService::class.java)
+            try {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    context.startForegroundService(intent)
+                } else {
+                    context.startService(intent)
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("MainViewModel", "Failed to start service on init", e)
+            }
+        }
     }
 
     fun checkServiceStatus() {
@@ -172,11 +186,27 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         prefs.monitoringEnabled = enabled
         _isMonitoringEnabled.value = enabled
         viewModelScope.launch {
+            val context = getApplication<Application>()
+            val intent = Intent(context, com.example.service.MyNotificationListenerService::class.java)
             if (enabled) {
                 _toastMessage.emit("Pemantauan Aktif 🟢")
                 checkServiceStatus()
+                try {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                        context.startForegroundService(intent)
+                    } else {
+                        context.startService(intent)
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("MainViewModel", "Failed to start service explicitly", e)
+                }
             } else {
                 _toastMessage.emit("Pemantauan Nonaktif 🔴")
+                try {
+                    context.stopService(intent)
+                } catch (e: Exception) {
+                    android.util.Log.e("MainViewModel", "Failed to stop service", e)
+                }
             }
         }
     }
@@ -304,20 +334,88 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun triggerManualRetry() {
         viewModelScope.launch {
-            val pendingCount = repository.getPendingLogs().size
-            if (pendingCount == 0) {
+            val pendingLogs = repository.getPendingLogs()
+            if (pendingLogs.isEmpty()) {
                 _toastMessage.emit("Tidak ada antrean log pending untuk dikirim")
                 return@launch
             }
 
-            val uploadWorkRequest = OneTimeWorkRequestBuilder<NotificationUploadWorker>()
-                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 10, TimeUnit.SECONDS)
-                .build()
+            _toastMessage.emit("Memulai pengiriman ulang ${pendingLogs.size} log secara langsung...")
 
-            WorkManager.getInstance(getApplication())
-                .enqueueUniqueWork("notification_upload_work", ExistingWorkPolicy.REPLACE, uploadWorkRequest)
+            val deviceId = Settings.Secure.getString(
+                getApplication<Application>().contentResolver,
+                Settings.Secure.ANDROID_ID
+            ) ?: "unknown_device"
 
-            _toastMessage.emit("Memulai sinkronisasi paksa untuk $pendingCount antrean...")
+            var successCount = 0
+            var failCount = 0
+
+            for (log in pendingLogs) {
+                val payload = NotificationPayload(
+                    deviceId = deviceId,
+                    deviceName = prefs.deviceName,
+                    packageName = log.packageName,
+                    applicationName = log.appName,
+                    title = log.title,
+                    message = log.message,
+                    bigText = log.bigText,
+                    subText = log.subText,
+                    receivedAt = log.receivedAt,
+                    androidVersion = log.androidVersion,
+                    deviceBrand = log.deviceBrand,
+                    deviceModel = log.deviceModel
+                )
+
+                val sendResult = networkClient.sendNotification(payload)
+                if (sendResult.isSuccess) {
+                    successCount++
+                    val updatedLog = log.copy(
+                        status = "SUCCESS",
+                        httpStatus = sendResult.getOrNull() ?: 200,
+                        errorMessage = null
+                    )
+                    repository.updateLog(updatedLog)
+                } else {
+                    failCount++
+                    val exception = sendResult.exceptionOrNull()
+                    val errorMsgText = exception?.message ?: "Unknown error"
+                    val httpErrorStatus = when (exception) {
+                        is java.io.IOException -> null
+                        else -> {
+                            val msg = exception?.message ?: ""
+                            if (msg.contains("HTTP error code:")) {
+                                msg.substringAfter("HTTP error code:").trim().toIntOrNull()
+                            } else {
+                                null
+                            }
+                        }
+                    }
+
+                    val nextRetryCount = log.retryCount + 1
+                    val isMaxExceeded = nextRetryCount >= prefs.retryCount
+                    val finalStatus = if (isMaxExceeded) "FAILED" else "PENDING_RETRY"
+
+                    val updatedLog = log.copy(
+                        status = finalStatus,
+                        retryCount = nextRetryCount,
+                        httpStatus = httpErrorStatus ?: log.httpStatus,
+                        errorMessage = errorMsgText
+                    )
+                    repository.updateLog(updatedLog)
+                }
+            }
+
+            if (failCount == 0) {
+                _toastMessage.emit("Berhasil mengirim ulang semua log! 🎉")
+            } else {
+                _toastMessage.emit("Selesai: $successCount berhasil, $failCount gagal. Periksa tab Logs untuk detail error.")
+                // Enqueue background worker as backup
+                val uploadWorkRequest = OneTimeWorkRequestBuilder<NotificationUploadWorker>()
+                    .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 10, TimeUnit.SECONDS)
+                    .build()
+                WorkManager.getInstance(getApplication())
+                    .enqueueUniqueWork("notification_upload_work", ExistingWorkPolicy.REPLACE, uploadWorkRequest)
+            }
         }
     }
 }

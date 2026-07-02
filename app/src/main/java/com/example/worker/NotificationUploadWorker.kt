@@ -59,14 +59,17 @@ class NotificationUploadWorker(
             if (sendResult.isSuccess) {
                 val updatedLog = log.copy(
                     status = "SUCCESS",
-                    httpStatus = sendResult.getOrNull() ?: 200
+                    httpStatus = sendResult.getOrNull() ?: 200,
+                    errorMessage = null
                 )
                 repository.updateLog(updatedLog)
             } else {
                 val nextRetryCount = log.retryCount + 1
                 val isMaxExceeded = nextRetryCount >= prefs.retryCount
                 val finalStatus = if (isMaxExceeded) "FAILED" else "PENDING_RETRY"
-                val httpErrorStatus = when (val exception = sendResult.exceptionOrNull()) {
+                val exception = sendResult.exceptionOrNull()
+                val errorMsgText = exception?.message ?: "Unknown error"
+                val httpErrorStatus = when (exception) {
                     is IOException -> null // Network/Socket timeout, no status code
                     else -> {
                         val msg = exception?.message ?: ""
@@ -81,9 +84,16 @@ class NotificationUploadWorker(
                 val updatedLog = log.copy(
                     status = finalStatus,
                     retryCount = nextRetryCount,
-                    httpStatus = httpErrorStatus ?: log.httpStatus
+                    httpStatus = httpErrorStatus ?: log.httpStatus,
+                    errorMessage = errorMsgText
                 )
                 repository.updateLog(updatedLog)
+
+                // Post a local push notification showing the error detail
+                showErrorNotification(
+                    "Gagal Meneruskan Notifikasi",
+                    "Aplikasi: ${log.appName}\nError: $errorMsgText"
+                )
 
                 if (!isMaxExceeded) {
                     hasFailures = true
@@ -95,6 +105,40 @@ class NotificationUploadWorker(
             Result.retry()
         } else {
             Result.success()
+        }
+    }
+
+    private fun showErrorNotification(title: String, message: String) {
+        val channelId = "error_service_channel"
+        val manager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            val channel = android.app.NotificationChannel(
+                channelId,
+                "Bridge Error Notifications",
+                android.app.NotificationManager.IMPORTANCE_HIGH
+            )
+            manager.createNotificationChannel(channel)
+        }
+
+        val pendingIntent = android.app.PendingIntent.getActivity(
+            applicationContext, 0,
+            android.content.Intent(applicationContext, com.example.MainActivity::class.java),
+            android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val notification = androidx.core.app.NotificationCompat.Builder(applicationContext, channelId)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setSmallIcon(android.R.drawable.stat_notify_error)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .setPriority(androidx.core.app.NotificationCompat.PRIORITY_HIGH)
+            .build()
+
+        try {
+            manager.notify(101, notification)
+        } catch (e: Exception) {
+            android.util.Log.e("NotificationWorker", "Failed to show error notification", e)
         }
     }
 }

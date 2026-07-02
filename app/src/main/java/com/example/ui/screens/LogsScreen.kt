@@ -10,6 +10,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.CheckCircle
@@ -42,6 +44,7 @@ import com.example.ui.MainViewModel
 import com.example.ui.components.DuoButton
 import com.example.ui.components.DuoCard
 import com.example.ui.theme.DuoBlue
+import com.example.ui.theme.DuoBlueDark
 import com.example.ui.theme.DuoGray
 import com.example.ui.theme.DuoGrayLight
 import com.example.ui.theme.DuoGreen
@@ -55,6 +58,8 @@ fun LogsScreen(
     modifier: Modifier = Modifier
 ) {
     val logs by viewModel.allLogs.collectAsState()
+    var currentPage by remember { mutableStateOf(1) }
+    var itemsPerPage by remember { mutableStateOf(10) }
 
     Column(
         modifier = modifier
@@ -86,7 +91,10 @@ fun LogsScreen(
 
             if (logs.isNotEmpty()) {
                 DuoButton(
-                    onClick = { viewModel.clearLogs() },
+                    onClick = { 
+                        viewModel.clearLogs()
+                        currentPage = 1
+                    },
                     containerColor = DuoRed,
                     shadowColor = DuoRedDark,
                     modifier = Modifier
@@ -151,6 +159,14 @@ fun LogsScreen(
                 }
             }
         } else {
+            val totalPages = maxOf(1, kotlin.math.ceil(logs.size.toDouble() / itemsPerPage).toInt())
+            if (currentPage > totalPages) {
+                currentPage = totalPages
+            }
+            val startIndex = (currentPage - 1) * itemsPerPage
+            val endIndex = minOf(startIndex + itemsPerPage, logs.size)
+            val paginatedLogs = logs.subList(startIndex, endIndex)
+
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -158,8 +174,96 @@ fun LogsScreen(
                     .testTag("logs_list"),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(logs, key = { it.id }) { log ->
+                items(paginatedLogs, key = { it.id }) { log ->
                     LogItemCard(log = log)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Pagination Controls Row
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Left side: Items per page selector or label
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = "Tampilkan:",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    // Chips to select items per page
+                    listOf(5, 10, 25).forEach { limit ->
+                        val isSelected = itemsPerPage == limit
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(if (isSelected) DuoBlue else DuoGrayLight.copy(alpha = 0.5f))
+                                .clickable {
+                                    itemsPerPage = limit
+                                    currentPage = 1 // reset to first page
+                                }
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = limit.toString(),
+                                color = if (isSelected) Color.White else DuoGray,
+                                fontWeight = FontWeight.Black,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+                }
+
+                // Right side: Prev / Next with page info
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    DuoButton(
+                        onClick = { if (currentPage > 1) currentPage-- },
+                        enabled = currentPage > 1,
+                        containerColor = DuoBlue,
+                        shadowColor = DuoBlueDark,
+                        modifier = Modifier.width(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.ArrowBack,
+                            contentDescription = "Halaman Sebelumnya",
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+
+                    Text(
+                        text = "$currentPage / $totalPages",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    DuoButton(
+                        onClick = { if (currentPage < totalPages) currentPage++ },
+                        enabled = currentPage < totalPages,
+                        containerColor = DuoBlue,
+                        shadowColor = DuoBlueDark,
+                        modifier = Modifier.width(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.ArrowForward,
+                            contentDescription = "Halaman Berikutnya",
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                 }
             }
         }
@@ -319,6 +423,9 @@ fun LogItemCard(log: NotificationLog) {
 
                     DetailRow(label = "ISO Received Time", value = log.receivedAt)
                     DetailRow(label = "HTTP Code", value = log.httpStatus?.toString() ?: "N/A (Pending)")
+                    if (!log.errorMessage.isNullOrEmpty()) {
+                        DetailRow(label = "Error Detail", value = log.errorMessage)
+                    }
                     DetailRow(label = "Android Version", value = log.androidVersion)
                     DetailRow(label = "Device Brand", value = log.deviceBrand)
                     DetailRow(label = "Device Model", value = log.deviceModel)
